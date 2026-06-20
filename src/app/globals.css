@@ -1,0 +1,16 @@
+body {
+  background: #020817;
+  color: white;
+}
+
+input,
+select,
+textarea {
+  color: black !important;
+  background: white !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #666 !important;
+}

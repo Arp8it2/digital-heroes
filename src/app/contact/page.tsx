@@ -4,7 +4,7 @@ export default function ContactPage() {
       <h1>📩 Contact</h1>
 
       <p>Email: support@golfcharity.com</p>
-      <p>Phone: +91 00000 00000</p>
+      <p>Phone: +91 6387716657</p>
     </main>
   );
 }

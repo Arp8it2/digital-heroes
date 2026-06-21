@@ -8,7 +8,6 @@ export default function Navbar() {
 
   const links = [
     { href: "/", label: "Home" },
-
     { href: "/dashboard", label: "Dashboard" },
     { href: "/scores", label: "Scores" },
     { href: "/draws", label: "Draws" },
@@ -16,18 +15,13 @@ export default function Navbar() {
     { href: "/charities", label: "Charities" },
     { href: "/subscriptions", label: "Subscriptions" },
     { href: "/contributions", label: "Contributions" },
-
     { href: "/profile", label: "Profile" },
-
     { href: "/login", label: "Login" },
     { href: "/signup", label: "Signup" },
-
     { href: "/contact", label: "Contact" },
     { href: "/help", label: "Help" },
-
     { href: "/privacy", label: "Privacy" },
     { href: "/terms", label: "Terms" },
-
     { href: "/admin", label: "Admin" },
   ];
 

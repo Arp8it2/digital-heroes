@@ -1,117 +1,108 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
+type Score = {
+  id: string;
+  user_id: string;
+  course_name?: string;
+  score: number;
+  created_at?: string;
+};
+
 export default function ScoresPage() {
-  const [score, setScore] = useState("");
-  const [scoreDate, setScoreDate] = useState("");
+  const [scores, setScores] = useState<Score[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const submitScore = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+  useEffect(() => {
+    fetchScores();
+  }, []);
 
-    if (!user) {
-      alert("Please login first");
-      return;
-    }
+  const fetchScores = async () => {
+    setLoading(true);
 
-    if (!scoreDate) {
-      alert("Please select a date");
-      return;
-    }
-
-    const scoreValue = Number(score);
-
-    if (scoreValue < 1 || scoreValue > 45) {
-      alert("Score must be between 1 and 45");
-      return;
-    }
-
-    // Duplicate date check
-    const { data: existing } = await supabase
-      .from("scores")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("score_date", scoreDate);
-
-    if (existing && existing.length > 0) {
-      alert(
-        "A score already exists for this date. Edit or delete it instead."
-      );
-      return;
-    }
-
-    // Current scores
-    const { data: currentScores } = await supabase
+    const { data, error } = await supabase
       .from("scores")
       .select("*")
-      .eq("user_id", user.id)
-      .order("score_date", { ascending: true });
-
-    // Keep only latest 5 scores
-    if (currentScores && currentScores.length >= 5) {
-      const oldest = currentScores[0];
-
-      await supabase
-        .from("scores")
-        .delete()
-        .eq("id", oldest.id);
-    }
-
-    const { error } = await supabase
-      .from("scores")
-      .insert([
-        {
-          user_id: user.id,
-          score: scoreValue,
-          score_date: scoreDate,
-        },
-      ]);
+      .order("created_at", { ascending: false });
 
     if (error) {
       alert(error.message);
-      console.log(error);
+      setLoading(false);
       return;
     }
 
-    alert("Score Submitted Successfully");
-
-    setScore("");
-    setScoreDate("");
+    setScores(data || []);
+    setLoading(false);
   };
 
   return (
-    <main style={{ padding: "40px" }}>
-      <h1>Submit Golf Score</h1>
+    <main style={styles.main}>
+      <h1 style={styles.title}>🏌️ Scores</h1>
 
-      <input
-        type="number"
-        min="1"
-        max="45"
-        placeholder="Score (1-45)"
-        value={score}
-        onChange={(e) => setScore(e.target.value)}
-      />
+      {loading && <p>Loading scores...</p>}
 
-      <br />
-      <br />
+      {!loading && scores.length === 0 && (
+        <p>No scores found.</p>
+      )}
 
-      <input
-        type="date"
-        value={scoreDate}
-        onChange={(e) =>
-          setScoreDate(e.target.value)
-        }
-      />
+      <div style={styles.grid}>
+        {scores.map((item) => (
+          <div key={item.id} style={styles.card}>
+            <p>
+              <b>User:</b> {item.user_id}
+            </p>
 
-      <br />
-      <br />
+            <p>
+              <b>Course:</b>{" "}
+              {item.course_name || "N/A"}
+            </p>
 
-      <button onClick={submitScore}>
-        Submit Score
-      </button>
+            <p>
+              <b>Score:</b> {item.score}
+            </p>
+
+            {item.created_at && (
+              <p style={styles.small}>
+                {new Date(item.created_at).toLocaleString()}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
     </main>
   );
 }
+
+const styles: { [key: string]: React.CSSProperties } = {
+  main: {
+    padding: "40px",
+    minHeight: "100vh",
+    background: "#0f172a",
+    color: "#fff",
+    fontFamily: "sans-serif",
+  },
+
+  title: {
+    fontSize: "28px",
+    marginBottom: "20px",
+  },
+
+  grid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+    gap: "15px",
+  },
+
+  card: {
+    background: "#1e293b",
+    padding: "15px",
+    borderRadius: "10px",
+  },
+
+  small: {
+    fontSize: "12px",
+    opacity: 0.7,
+  },
+};

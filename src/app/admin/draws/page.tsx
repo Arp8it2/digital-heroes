@@ -1,159 +1,115 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
+type Draw = {
+  id: string;
+  mode: "random" | "algorithmic";
+  status: string;
+  jackpot_amount: number;
+  created_at?: string;
+};
+
 export default function AdminDrawsPage() {
-  const runDraw = async () => {
-    const { data: draw, error: drawError } =
-      await supabase
-        .from("draws")
-        .select("*")
-        .eq("status", "published")
-        .single();
+  const [draws, setDraws] = useState<Draw[]>([]);
+  const [loading, setLoading] = useState(true);
 
-    console.log("DRAW =", draw);
-    console.log(
-      "DRAW ERROR =",
-      drawError
-    );
+  useEffect(() => {
+    fetchDraws();
+  }, []);
 
-    if (drawError || !draw) {
-      alert("No published draw found");
-      return;
-    }
+  const fetchDraws = async () => {
+    setLoading(true);
 
-    const { data: entries, error } =
-      await supabase
-        .from("draw_entries")
-        .select("*")
-        .eq("draw_id", draw.id);
-
-    console.log(
-      "ENTRIES =",
-      entries
-    );
-
-    console.log(
-      "ENTRIES ERROR =",
-      error
-    );
+    const { data, error } = await supabase
+      .from("draws")
+      .select("*")
+      .order("created_at", { ascending: false });
 
     if (error) {
       alert(error.message);
+      setLoading(false);
       return;
     }
 
-    if (
-      !entries ||
-      entries.length === 0
-    ) {
-      alert(
-        "No draw entries found"
-      );
-      return;
-    }
-
-    let winner;
-
-    // RANDOM DRAW
-    if (draw.mode === "random") {
-      winner =
-        entries[
-          Math.floor(
-            Math.random() *
-              entries.length
-          )
-        ];
-    }
-
-    // ALGORITHMIC DRAW
-    else {
-      const sorted =
-        [...entries].sort(
-          (a, b) =>
-            b.match_count -
-            a.match_count
-        );
-
-      winner = sorted[0];
-    }
-
-    console.log(
-      "WINNER =",
-      winner
-    );
-
-    const {
-      error: winnerError,
-    } = await supabase
-      .from("winners")
-      .insert([
-        {
-          draw_id: draw.id,
-          draw_entry_id:
-            winner.id,
-          user_id:
-            winner.user_id,
-          match_type:
-            winner.match_type,
-          prize_amount:
-            draw.jackpot_amount,
-          status:
-            "pending",
-        },
-      ]);
-
-    console.log(
-      "WINNER ERROR =",
-      winnerError
-    );
-
-    if (winnerError) {
-      alert(
-        winnerError.message
-      );
-      return;
-    }
-
-    await supabase
-      .from("draws")
-      .update({
-        status:
-          "simulation",
-      })
-      .eq("id", draw.id);
-
-    alert(
-      `Winner Selected (${draw.mode})`
-    );
+    setDraws(data || []);
+    setLoading(false);
   };
 
   return (
-    <main
-      style={{
-        padding: "40px",
-      }}
-    >
-      <h1>
-        Admin Draw Management
-      </h1>
+    <main style={styles.main}>
+      <h1 style={styles.title}>🎯 Admin Draws</h1>
 
-      <p>
-        Random Mode =
-        Random Winner
-      </p>
+      {loading && <p>Loading draws...</p>}
 
-      <p>
-        Algorithmic Mode =
-        Highest Match Count
-        Wins
-      </p>
+      {!loading && draws.length === 0 && (
+        <p>No draws found.</p>
+      )}
 
-      <button
-        onClick={runDraw}
-      >
-        Run Draw
-      </button>
+      <div style={styles.grid}>
+        {draws.map((draw) => (
+          <div key={draw.id} style={styles.card}>
+            <h2>Draw ID</h2>
+            <p style={styles.small}>{draw.id}</p>
+
+            <p>
+              <b>Mode:</b> {draw.mode}
+            </p>
+
+            <p>
+              <b>Status:</b>{" "}
+              <span
+                style={{
+                  color:
+                    draw.status === "published"
+                      ? "lightgreen"
+                      : "orange",
+                }}
+              >
+                {draw.status}
+              </span>
+            </p>
+
+            <p>
+              <b>Jackpot:</b> ₹{draw.jackpot_amount}
+            </p>
+          </div>
+        ))}
+      </div>
     </main>
   );
 }
+
+const styles: { [key: string]: React.CSSProperties } = {
+  main: {
+    padding: "40px",
+    minHeight: "100vh",
+    background: "#0f172a",
+    color: "#fff",
+    fontFamily: "sans-serif",
+  },
+
+  title: {
+    fontSize: "28px",
+    marginBottom: "20px",
+  },
+
+  grid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+    gap: "15px",
+  },
+
+  card: {
+    background: "#1e293b",
+    padding: "15px",
+    borderRadius: "10px",
+  },
+
+  small: {
+    fontSize: "12px",
+    opacity: 0.7,
+    wordBreak: "break-word",
+  },
+};

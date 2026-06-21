@@ -1,64 +1,110 @@
 "use client";
 
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { usePathname } from "next/navigation";
 
 export default function Navbar() {
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
+  const pathname = usePathname();
 
-    window.location.href = "/login";
-  };
+  const isActive = (path: string) => pathname === path;
 
   return (
-    <nav
-      style={{
-        padding: "15px",
-        borderBottom: "1px solid #ddd",
-        display: "flex",
-        gap: "15px",
-        flexWrap: "wrap",
-      }}
-    >
-      <Link href="/">Home</Link>
+    <nav style={styles.nav}>
+      <div style={styles.left}>
+        <b>🏌️ Golf Charity</b>
+      </div>
 
-      <Link href="/signup">Signup</Link>
+      <div style={styles.links}>
+        <Link href="/" style={isActive("/") ? styles.active : styles.link}>
+          Home
+        </Link>
 
-      <Link href="/login">Login</Link>
+        <Link
+          href="/dashboard"
+          style={isActive("/dashboard") ? styles.active : styles.link}
+        >
+          Dashboard
+        </Link>
 
-      <Link href="/dashboard">Dashboard</Link>
+        <Link
+          href="/scores"
+          style={isActive("/scores") ? styles.active : styles.link}
+        >
+          Scores
+        </Link>
 
-      <Link href="/scores">Scores</Link>
+        <Link
+          href="/draws"
+          style={isActive("/draws") ? styles.active : styles.link}
+        >
+          Draws
+        </Link>
 
-      <Link href="/charities">Charities</Link>
+        <Link
+          href="/winners"
+          style={isActive("/winners") ? styles.active : styles.link}
+        >
+          Winners
+        </Link>
 
-      <Link href="/draws">Draws</Link>
+        <Link
+          href="/charities"
+          style={isActive("/charities") ? styles.active : styles.link}
+        >
+          Charities
+        </Link>
 
-      <Link href="/contributions">Contributions</Link>
+        <Link
+          href="/subscriptions"
+          style={isActive("/subscriptions") ? styles.active : styles.link}
+        >
+          Subscription
+        </Link>
 
-      <Link href="/subscriptions">Subscriptions</Link>
-
-      <Link href="/profile">Profile</Link>
-
-      <Link href="/winners">Winners</Link>
-
-      <Link href="/admin">Admin</Link>
-
-      <Link href="/admin/users">Users</Link>
-
-      <Link href="/admin/charities">Manage Charities</Link>
-
-      <Link href="/help">Help</Link>
-
-      <Link href="/contact">Contact</Link>
-
-      <Link href="/privacy">Privacy</Link>
-
-      <Link href="/terms">Terms</Link>
-
-      <button onClick={handleLogout}>
-        Logout
-      </button>
+        <Link
+          href="/login"
+          style={isActive("/login") ? styles.active : styles.link}
+        >
+          Login
+        </Link>
+      </div>
     </nav>
   );
 }
+
+const styles: { [key: string]: React.CSSProperties } = {
+  nav: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "15px 20px",
+    background: "#1e293b",
+    color: "white",
+    flexWrap: "wrap",
+  },
+
+  left: {
+    fontSize: "18px",
+  },
+
+  links: {
+    display: "flex",
+    gap: "12px",
+    flexWrap: "wrap",
+  },
+
+  link: {
+    color: "#cbd5e1",
+    textDecoration: "none",
+    padding: "6px 10px",
+    borderRadius: "6px",
+  },
+
+  active: {
+    color: "white",
+    background: "#2563eb",
+    textDecoration: "none",
+    padding: "6px 10px",
+    borderRadius: "6px",
+  },
+};

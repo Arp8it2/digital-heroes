@@ -7,16 +7,14 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = async () => {
-    const result = await supabase.auth.signInWithPassword({
+  const login = async () => {
+    const res = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    console.log(result);
-
-    if (result.error) {
-      alert(result.error.message);
+    if (res.error) {
+      alert(res.error.message);
       return;
     }
 
@@ -24,32 +22,51 @@ export default function LoginPage() {
   };
 
   return (
-    <main style={{ padding: "40px" }}>
-      <h1>Login</h1>
+    <main style={styles.main}>
+      <h1>🔐 Login</h1>
 
       <input
-        type="email"
+        style={styles.input}
         placeholder="Email"
-        value={email}
         onChange={(e) => setEmail(e.target.value)}
       />
 
-      <br />
-      <br />
-
       <input
+        style={styles.input}
         type="password"
         placeholder="Password"
-        value={password}
         onChange={(e) => setPassword(e.target.value)}
       />
 
-      <br />
-      <br />
-
-      <button onClick={handleLogin}>
+      <button style={styles.btn} onClick={login}>
         Login
       </button>
     </main>
   );
 }
+
+const styles = {
+  main: {
+    padding: "40px",
+    minHeight: "100vh",
+    background: "#0f172a",
+    color: "white",
+  },
+  input: {
+    display: "block",
+    padding: "10px",
+    marginTop: "10px",
+    width: "300px",
+    borderRadius: "6px",
+    border: "none",
+  },
+  btn: {
+    marginTop: "15px",
+    padding: "10px 15px",
+    background: "green",
+    color: "white",
+    border: "none",
+    borderRadius: "6px",
+    cursor: "pointer",
+  },
+};

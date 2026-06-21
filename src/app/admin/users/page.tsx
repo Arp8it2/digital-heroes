@@ -3,106 +3,135 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
-export default function AdminUsersPage() {
-  const [users, setUsers] = useState<any[]>([]);
+type Winner = {
+  id: string;
+  draw_id: string;
+  user_id: string;
+  match_type: string;
+  prize_amount: number;
+  status: string;
+  created_at?: string;
+};
+
+export default function AdminWinnersPage() {
+  const [winners, setWinners] = useState<Winner[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadUsers();
+    fetchWinners();
   }, []);
 
-  const loadUsers = async () => {
+  const fetchWinners = async () => {
+    setLoading(true);
+
     const { data, error } = await supabase
-      .from("profiles")
+      .from("winners")
       .select("*")
-      .order("created_at", {
-        ascending: false,
-      });
-
-    if (error) {
-      console.log(error);
-      return;
-    }
-
-    setUsers(data || []);
-  };
-
-  const changeRole = async (
-    userId: string,
-    role: string
-  ) => {
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        role: role,
-      })
-      .eq("id", userId);
+      .order("created_at", { ascending: false });
 
     if (error) {
       alert(error.message);
+      setLoading(false);
       return;
     }
 
-    alert("Role Updated");
-
-    loadUsers();
+    setWinners(data || []);
+    setLoading(false);
   };
 
   return (
-    <main style={{ padding: "40px" }}>
-      <h1>Admin User Management</h1>
+    <main style={styles.main}>
+      <h1 style={styles.title}>🏆 Admin Winners</h1>
 
-      <table
-        border={1}
-        cellPadding={10}
-      >
-        <thead>
-          <tr>
-            <th>Email</th>
-            <th>Role</th>
-            <th>Action</th>
-          </tr>
-        </thead>
+      {loading && <p>Loading winners...</p>}
 
-        <tbody>
-          {users.map((user) => (
-            <tr key={user.id}>
-              <td>
-                {user.email}
-              </td>
+      {!loading && winners.length === 0 && (
+        <p>No winners found.</p>
+      )}
 
-              <td>
-                {user.role}
-              </td>
+      <div style={styles.grid}>
+        {winners.map((w) => (
+          <div key={w.id} style={styles.card}>
+            <h2>Winner</h2>
 
-              <td>
-                <button
-                  onClick={() =>
-                    changeRole(
-                      user.id,
-                      "admin"
-                    )
-                  }
-                >
-                  Make Admin
-                </button>
+            <p>
+              <b>User ID:</b>
+              <br />
+              {w.user_id}
+            </p>
 
-                {" "}
+            <p>
+              <b>Draw ID:</b>
+              <br />
+              {w.draw_id}
+            </p>
 
-                <button
-                  onClick={() =>
-                    changeRole(
-                      user.id,
-                      "subscriber"
-                    )
-                  }
-                >
-                  Make Subscriber
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+            <p>
+              <b>Match Type:</b>{" "}
+              {w.match_type}
+            </p>
+
+            <p>
+              <b>Prize:</b>{" "}
+              ₹{w.prize_amount}
+            </p>
+
+            <p>
+              <b>Status:</b>{" "}
+              <span
+                style={{
+                  color:
+                    w.status === "paid"
+                      ? "lightgreen"
+                      : "orange",
+                }}
+              >
+                {w.status}
+              </span>
+            </p>
+
+            {w.created_at && (
+              <p style={styles.small}>
+                {new Date(
+                  w.created_at
+                ).toLocaleString()}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
     </main>
   );
 }
+
+const styles: { [key: string]: React.CSSProperties } = {
+  main: {
+    padding: "40px",
+    minHeight: "100vh",
+    background: "#0f172a",
+    color: "#fff",
+    fontFamily: "sans-serif",
+  },
+
+  title: {
+    fontSize: "28px",
+    marginBottom: "20px",
+  },
+
+  grid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+    gap: "15px",
+  },
+
+  card: {
+    background: "#1e293b",
+    padding: "15px",
+    borderRadius: "10px",
+  },
+
+  small: {
+    fontSize: "12px",
+    opacity: 0.7,
+  },
+};

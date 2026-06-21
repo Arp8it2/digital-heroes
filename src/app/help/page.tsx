@@ -1,11 +1,20 @@
 export default function HelpPage() {
   return (
-    <main style={{ padding: "40px" }}>
-      <h1>Help Center</h1>
+    <main style={styles.main}>
+      <h1>❓ Help</h1>
+
       <p>
-        Need help submitting scores, managing subscriptions, or charity
-        selection? Contact support.
+        If you face any issue, contact support or check FAQs.
       </p>
     </main>
   );
 }
+
+const styles = {
+  main: {
+    padding: "40px",
+    minHeight: "100vh",
+    background: "#0f172a",
+    color: "white",
+  },
+};

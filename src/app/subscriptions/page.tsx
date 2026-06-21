@@ -3,152 +3,121 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
+type Subscription = {
+  id: string;
+  user_id: string;
+  status: string;
+  amount: number;
+  start_date?: string;
+  end_date?: string;
+};
+
 export default function SubscriptionsPage() {
-  const [plans, setPlans] = useState<any[]>([]);
-  const [subscription, setSubscription] = useState<any>(null);
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadPlans();
-    loadSubscription();
+    fetchSubscriptions();
   }, []);
 
-  const loadPlans = async () => {
-    const { data, error } = await supabase
-      .from("subscription_plans")
-      .select("*");
-
-    if (error) {
-      console.log(error);
-      return;
-    }
-
-    setPlans(data || []);
-  };
-
-  const loadSubscription = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) return;
+  const fetchSubscriptions = async () => {
+    setLoading(true);
 
     const { data, error } = await supabase
       .from("subscriptions")
       .select("*")
-      .eq("user_id", user.id)
-      .eq("status", "active");
-
-    if (error) {
-      console.log(error);
-      return;
-    }
-
-    if (data && data.length > 0) {
-      setSubscription(data[0]);
-    }
-  };
-
-  const subscribe = async (plan: string) => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      alert("Login first");
-      return;
-    }
-
-    if (subscription) {
-      alert(
-        "You already have an active subscription"
-      );
-      return;
-    }
-
-    const today = new Date();
-
-    const nextMonth = new Date();
-    nextMonth.setMonth(
-      nextMonth.getMonth() + 1
-    );
-
-    const { error } = await supabase
-      .from("subscriptions")
-      .insert([
-        {
-          user_id: user.id,
-          plan: plan,
-          status: "active",
-          current_period_start:
-            today.toISOString(),
-          current_period_end:
-            nextMonth.toISOString(),
-        },
-      ]);
+      .order("created_at", { ascending: false });
 
     if (error) {
       alert(error.message);
+      setLoading(false);
       return;
     }
 
-    alert("Subscription Activated");
-
-    loadSubscription();
+    setSubscriptions(data || []);
+    setLoading(false);
   };
 
   return (
-    <main style={{ padding: "40px" }}>
-      <h1>Subscription Plans</h1>
+    <main style={styles.main}>
+      <h1 style={styles.title}>💳 Subscriptions</h1>
 
-      {subscription && (
-        <div
-          style={{
-            border: "2px solid green",
-            padding: "15px",
-            marginBottom: "20px",
-          }}
-        >
-          <h3>Active Subscription</h3>
+      {loading && <p>Loading subscriptions...</p>}
 
-          <p>
-            Plan: {subscription.plan}
-          </p>
-
-          <p>
-            Status: {subscription.status}
-          </p>
-
-          <p>
-            Expires:{" "}
-            {new Date(
-              subscription.current_period_end
-            ).toLocaleDateString()}
-          </p>
-        </div>
+      {!loading && subscriptions.length === 0 && (
+        <p>No subscriptions found.</p>
       )}
 
-      {plans.map((plan) => (
-        <div
-          key={plan.plan}
-          style={{
-            border: "1px solid #ccc",
-            padding: "15px",
-            marginBottom: "10px",
-          }}
-        >
-          <h3>{plan.label}</h3>
+      <div style={styles.grid}>
+        {subscriptions.map((item) => (
+          <div key={item.id} style={styles.card}>
+            <p>
+              <b>User ID:</b>
+              <br />
+              {item.user_id}
+            </p>
 
-          <p>£{plan.price_gbp}</p>
+            <p>
+              <b>Status:</b>{" "}
+              <span
+                style={{
+                  color:
+                    item.status === "active"
+                      ? "lightgreen"
+                      : "orange",
+                }}
+              >
+                {item.status}
+              </span>
+            </p>
 
-          <button
-            onClick={() =>
-              subscribe(plan.plan)
-            }
-          >
-            Subscribe
-          </button>
-        </div>
-      ))}
+            <p>
+              <b>Amount:</b> ₹{item.amount}
+            </p>
+
+            {item.start_date && (
+              <p>
+                <b>Start Date:</b>{" "}
+                {new Date(item.start_date).toLocaleDateString()}
+              </p>
+            )}
+
+            {item.end_date && (
+              <p>
+                <b>End Date:</b>{" "}
+                {new Date(item.end_date).toLocaleDateString()}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
     </main>
   );
 }
+
+const styles: { [key: string]: React.CSSProperties } = {
+  main: {
+    padding: "40px",
+    minHeight: "100vh",
+    background: "#0f172a",
+    color: "#fff",
+    fontFamily: "sans-serif",
+  },
+
+  title: {
+    fontSize: "28px",
+    marginBottom: "20px",
+  },
+
+  grid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+    gap: "15px",
+  },
+
+  card: {
+    background: "#1e293b",
+    padding: "15px",
+    borderRadius: "10px",
+  },
+};

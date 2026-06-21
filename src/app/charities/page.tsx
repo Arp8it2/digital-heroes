@@ -3,102 +3,131 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
+type Charity = {
+  id: string;
+  name: string;
+  description: string;
+  image_url?: string;
+  website_url?: string;
+  is_active?: boolean;
+};
+
 export default function CharitiesPage() {
-  const [charities, setCharities] = useState<any[]>([]);
-  const [selectedCharity, setSelectedCharity] = useState("");
+  const [charities, setCharities] = useState<Charity[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadCharities();
-    loadSelectedCharity();
+    fetchCharities();
   }, []);
 
-  const loadCharities = async () => {
+  const fetchCharities = async () => {
+    setLoading(true);
+
     const { data, error } = await supabase
       .from("charities")
       .select("*")
-      .eq("is_active", true);
+      .order("created_at", { ascending: false });
 
     if (error) {
-      console.log(error);
+      alert(error.message);
+      setLoading(false);
       return;
     }
 
     setCharities(data || []);
-  };
-
-  const loadSelectedCharity = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) return;
-
-    const { data } = await supabase
-      .from("profiles")
-      .select("charity_id")
-      .eq("id", user.id)
-      .single();
-
-    if (data?.charity_id) {
-      setSelectedCharity(data.charity_id);
-    }
-  };
-
-  const selectCharity = async (charityId: string) => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      alert("Please login first");
-      return;
-    }
-
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        charity_id: charityId,
-      })
-      .eq("id", user.id);
-
-    if (error) {
-      alert(error.message);
-      return;
-    }
-
-    setSelectedCharity(charityId);
-
-    alert("Charity Selected Successfully");
+    setLoading(false);
   };
 
   return (
-    <main style={{ padding: "40px" }}>
-      <h1>Select Charity</h1>
+    <main style={styles.main}>
+      <h1 style={styles.title}>💰 Charities</h1>
 
-      {charities.map((charity) => (
-        <div
-          key={charity.id}
-          style={{
-            border: "1px solid #ccc",
-            padding: "15px",
-            marginBottom: "10px",
-          }}
-        >
-          <h3>{charity.name}</h3>
+      {loading && <p>Loading charities...</p>}
 
-          <p>{charity.description}</p>
+      {!loading && charities.length === 0 && (
+        <p>No charities found.</p>
+      )}
 
-          <button
-            onClick={() =>
-              selectCharity(charity.id)
-            }
-          >
-            {selectedCharity === charity.id
-              ? "Selected"
-              : "Select Charity"}
-          </button>
-        </div>
-      ))}
+      <div style={styles.grid}>
+        {charities.map((item) => (
+          <div key={item.id} style={styles.card}>
+            <h2>{item.name}</h2>
+
+            <p style={styles.desc}>
+              {item.description}
+            </p>
+
+            {item.image_url && (
+              <img
+                src={item.image_url}
+                style={styles.image}
+              />
+            )}
+
+            <p>
+              <b>Website:</b>{" "}
+              <a
+                href={item.website_url}
+                target="_blank"
+                style={styles.link}
+              >
+                {item.website_url}
+              </a>
+            </p>
+
+            <p>
+              Status:{" "}
+              {item.is_active
+                ? "🟢 Active"
+                : "🔴 Inactive"}
+            </p>
+          </div>
+        ))}
+      </div>
     </main>
   );
 }
+
+const styles: { [key: string]: React.CSSProperties } = {
+  main: {
+    padding: "40px",
+    minHeight: "100vh",
+    background: "#0f172a",
+    color: "#fff",
+    fontFamily: "sans-serif",
+  },
+
+  title: {
+    fontSize: "28px",
+    marginBottom: "20px",
+  },
+
+  grid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+    gap: "15px",
+  },
+
+  card: {
+    background: "#1e293b",
+    padding: "15px",
+    borderRadius: "10px",
+  },
+
+  desc: {
+    fontSize: "14px",
+    opacity: 0.9,
+  },
+
+  image: {
+    width: "100%",
+    height: "180px",
+    objectFit: "cover",
+    borderRadius: "8px",
+    marginTop: "10px",
+  },
+
+  link: {
+    color: "#60a5fa",
+  },
+};

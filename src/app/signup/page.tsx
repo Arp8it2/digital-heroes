@@ -6,78 +6,57 @@ import { supabase } from "@/lib/supabase";
 export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
 
-  const handleSignup = async () => {
-    setLoading(true);
-
-    const { data, error } = await supabase.auth.signUp({
+  const signup = async () => {
+    const res = await supabase.auth.signUp({
       email,
       password,
     });
 
-    console.log("SIGNUP RESULT =", {
-      data,
-      error,
-    });
-
-    if (error) {
-      alert(error.message);
-      setLoading(false);
+    if (res.error) {
+      alert(res.error.message);
       return;
     }
 
-    if (data.user) {
-      await supabase.from("profiles").insert([
-        {
-          id: data.user.id,
-          email: data.user.email,
-          full_name: "New User",
-          charity_pct: 10,
-        },
-      ]);
-    }
-
     alert("Signup Success");
-    setLoading(false);
   };
 
   return (
-    <main style={{ padding: "40px" }}>
-      <h1>Signup</h1>
+    <main style={styles.main}>
+      <h1>📝 Signup</h1>
 
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) =>
-          setEmail(e.target.value)
-        }
-      />
+      <input style={styles.input} placeholder="Email" onChange={(e) => setEmail(e.target.value)} />
+      <input style={styles.input} type="password" placeholder="Password" onChange={(e) => setPassword(e.target.value)} />
 
-      <br />
-      <br />
-
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) =>
-          setPassword(e.target.value)
-        }
-      />
-
-      <br />
-      <br />
-
-      <button
-        onClick={handleSignup}
-        disabled={loading}
-      >
-        {loading
-          ? "Creating..."
-          : "Create Account"}
+      <button style={styles.btn} onClick={signup}>
+        Signup
       </button>
     </main>
   );
 }
+
+const styles = {
+  main: {
+    padding: "40px",
+    minHeight: "100vh",
+    background: "#0f172a",
+    color: "white",
+  },
+  input: {
+    display: "block",
+    padding: "10px",
+    marginTop: "10px",
+    width: "300px",
+    borderRadius: "6px",
+    border: "none",
+  },
+  btn: {
+    marginTop: "15px",
+    padding: "10px 15px",
+    background: "#2563eb",
+    color: "white",
+    border: "none",
+    borderRadius: "6px",
+    cursor: "pointer",
+  },
+};

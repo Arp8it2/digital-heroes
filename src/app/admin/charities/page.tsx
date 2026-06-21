@@ -3,261 +3,143 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
+type Charity = {
+  id: string;
+  name: string;
+  description: string;
+  image_url?: string;
+  website_url?: string;
+  is_active?: boolean;
+  created_at?: string;
+};
+
 export default function AdminCharitiesPage() {
-  const [charities, setCharities] = useState<any[]>([]);
-
-  const [name, setName] = useState("");
-  const [description, setDescription] =
-    useState("");
-
-  const [website, setWebsite] =
-    useState("");
-
-  const [image, setImage] =
-    useState("");
+  const [charities, setCharities] = useState<Charity[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadCharities();
+    fetchCharities();
   }, []);
 
-  const loadCharities = async () => {
-    const { data, error } =
-      await supabase
-        .from("charities")
-        .select("*")
-        .order("created_at", {
-          ascending: false,
-        });
+  const fetchCharities = async () => {
+    setLoading(true);
+
+    const { data, error } = await supabase
+      .from("charities")
+      .select("*")
+      .order("created_at", { ascending: false });
 
     if (error) {
-      console.log(error);
+      alert(error.message);
+      setLoading(false);
       return;
     }
 
     setCharities(data || []);
+    setLoading(false);
   };
-
-  const addCharity = async () => {
-    if (!name) {
-      alert("Name required");
-      return;
-    }
-
-    const { error } =
-      await supabase
-        .from("charities")
-        .insert([
-          {
-            name,
-            description,
-            website_url:
-              website,
-            image_url:
-              image,
-            is_active: true,
-            is_featured:
-              false,
-          },
-        ]);
-
-    if (error) {
-      alert(error.message);
-      return;
-    }
-
-    alert(
-      "Charity Added"
-    );
-
-    setName("");
-    setDescription("");
-    setWebsite("");
-    setImage("");
-
-    loadCharities();
-  };
-
-  const toggleActive =
-    async (
-      id: string,
-      current: boolean
-    ) => {
-      await supabase
-        .from("charities")
-        .update({
-          is_active:
-            !current,
-        })
-        .eq("id", id);
-
-      loadCharities();
-    };
-
-  const toggleFeatured =
-    async (
-      id: string,
-      current: boolean
-    ) => {
-      await supabase
-        .from("charities")
-        .update({
-          is_featured:
-            !current,
-        })
-        .eq("id", id);
-
-      loadCharities();
-    };
 
   return (
-    <main
-      style={{
-        padding: "40px",
-      }}
-    >
-      <h1>
-        Admin Charity
-        Management
-      </h1>
+    <main style={styles.main}>
+      <h1 style={styles.title}>🏦 Admin Charities</h1>
 
-      <h2>
-        Add Charity
-      </h2>
+      {loading && <p>Loading charities...</p>}
 
-      <input
-        placeholder="Name"
-        value={name}
-        onChange={(e) =>
-          setName(
-            e.target.value
-          )
-        }
-      />
-
-      <br />
-      <br />
-
-      <input
-        placeholder="Website URL"
-        value={website}
-        onChange={(e) =>
-          setWebsite(
-            e.target.value
-          )
-        }
-      />
-
-      <br />
-      <br />
-
-      <input
-        placeholder="Image URL"
-        value={image}
-        onChange={(e) =>
-          setImage(
-            e.target.value
-          )
-        }
-      />
-
-      <br />
-      <br />
-
-      <textarea
-        placeholder="Description"
-        value={
-          description
-        }
-        onChange={(e) =>
-          setDescription(
-            e.target.value
-          )
-        }
-      />
-
-      <br />
-      <br />
-
-      <button
-        onClick={
-          addCharity
-        }
-      >
-        Add Charity
-      </button>
-
-      <hr />
-
-      <h2>
-        Existing
-        Charities
-      </h2>
-
-      {charities.map(
-        (charity) => (
-          <div
-            key={
-              charity.id
-            }
-            style={{
-              border:
-                "1px solid #ccc",
-              padding:
-                "15px",
-              marginBottom:
-                "10px",
-            }}
-          >
-            <h3>
-              {
-                charity.name
-              }
-            </h3>
-
-            <p>
-              Active:
-              {" "}
-              {String(
-                charity.is_active
-              )}
-            </p>
-
-            <p>
-              Featured:
-              {" "}
-              {String(
-                charity.is_featured
-              )}
-            </p>
-
-            <button
-              onClick={() =>
-                toggleActive(
-                  charity.id,
-                  charity.is_active
-                )
-              }
-            >
-              Toggle
-              Active
-            </button>
-
-            {" "}
-
-            <button
-              onClick={() =>
-                toggleFeatured(
-                  charity.id,
-                  charity.is_featured
-                )
-              }
-            >
-              Toggle
-              Featured
-            </button>
-          </div>
-        )
+      {!loading && charities.length === 0 && (
+        <p>No charities found.</p>
       )}
+
+      <div style={styles.grid}>
+        {charities.map((item) => (
+          <div key={item.id} style={styles.card}>
+            <h2 style={styles.name}>{item.name}</h2>
+
+            <p style={styles.desc}>{item.description}</p>
+
+            {item.image_url && (
+              <img
+                src={item.image_url}
+                alt={item.name}
+                style={styles.image}
+              />
+            )}
+
+            <p style={styles.meta}>
+              <b>Website:</b>{" "}
+              <a
+                href={item.website_url}
+                target="_blank"
+                style={styles.link}
+              >
+                {item.website_url || "N/A"}
+              </a>
+            </p>
+
+            <p style={styles.status}>
+              Status:{" "}
+              {item.is_active ? "🟢 Active" : "🔴 Inactive"}
+            </p>
+          </div>
+        ))}
+      </div>
     </main>
   );
 }
+
+const styles: { [key: string]: React.CSSProperties } = {
+  main: {
+    padding: "40px",
+    minHeight: "100vh",
+    background: "#0f172a",
+    color: "#fff",
+    fontFamily: "sans-serif",
+  },
+
+  title: {
+    fontSize: "28px",
+    marginBottom: "20px",
+  },
+
+  grid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+    gap: "15px",
+  },
+
+  card: {
+    background: "#1e293b",
+    padding: "15px",
+    borderRadius: "10px",
+  },
+
+  name: {
+    marginBottom: "8px",
+  },
+
+  desc: {
+    fontSize: "14px",
+    opacity: 0.9,
+  },
+
+  image: {
+    width: "100%",
+    height: "180px",
+    objectFit: "cover",
+    borderRadius: "8px",
+    marginTop: "10px",
+  },
+
+  meta: {
+    marginTop: "10px",
+    fontSize: "14px",
+  },
+
+  link: {
+    color: "#60a5fa",
+  },
+
+  status: {
+    marginTop: "10px",
+    fontWeight: 600,
+  },
+};

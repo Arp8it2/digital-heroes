@@ -6,67 +6,49 @@ import { usePathname } from "next/navigation";
 export default function Navbar() {
   const pathname = usePathname();
 
-  const isActive = (path: string) => pathname === path;
+  const links = [
+    { href: "/", label: "Home" },
+
+    { href: "/dashboard", label: "Dashboard" },
+    { href: "/scores", label: "Scores" },
+    { href: "/draws", label: "Draws" },
+    { href: "/winners", label: "Winners" },
+    { href: "/charities", label: "Charities" },
+    { href: "/subscriptions", label: "Subscriptions" },
+    { href: "/contributions", label: "Contributions" },
+
+    { href: "/profile", label: "Profile" },
+
+    { href: "/login", label: "Login" },
+    { href: "/signup", label: "Signup" },
+
+    { href: "/contact", label: "Contact" },
+    { href: "/help", label: "Help" },
+
+    { href: "/privacy", label: "Privacy" },
+    { href: "/terms", label: "Terms" },
+
+    { href: "/admin", label: "Admin" },
+  ];
 
   return (
     <nav style={styles.nav}>
-      <div style={styles.left}>
-        <b>🏌️ Golf Charity</b>
-      </div>
+      <div style={styles.logo}>🏌️ Golf Charity</div>
 
       <div style={styles.links}>
-        <Link href="/" style={isActive("/") ? styles.active : styles.link}>
-          Home
-        </Link>
-
-        <Link
-          href="/dashboard"
-          style={isActive("/dashboard") ? styles.active : styles.link}
-        >
-          Dashboard
-        </Link>
-
-        <Link
-          href="/scores"
-          style={isActive("/scores") ? styles.active : styles.link}
-        >
-          Scores
-        </Link>
-
-        <Link
-          href="/draws"
-          style={isActive("/draws") ? styles.active : styles.link}
-        >
-          Draws
-        </Link>
-
-        <Link
-          href="/winners"
-          style={isActive("/winners") ? styles.active : styles.link}
-        >
-          Winners
-        </Link>
-
-        <Link
-          href="/charities"
-          style={isActive("/charities") ? styles.active : styles.link}
-        >
-          Charities
-        </Link>
-
-        <Link
-          href="/subscriptions"
-          style={isActive("/subscriptions") ? styles.active : styles.link}
-        >
-          Subscription
-        </Link>
-
-        <Link
-          href="/login"
-          style={isActive("/login") ? styles.active : styles.link}
-        >
-          Login
-        </Link>
+        {links.map((link) => (
+          <Link
+            key={link.href}
+            href={link.href}
+            style={{
+              ...styles.link,
+              background:
+                pathname === link.href ? "#2563eb" : "transparent",
+            }}
+          >
+            {link.label}
+          </Link>
+        ))}
       </div>
     </nav>
   );
@@ -83,28 +65,22 @@ const styles: { [key: string]: React.CSSProperties } = {
     flexWrap: "wrap",
   },
 
-  left: {
+  logo: {
+    fontWeight: "bold",
     fontSize: "18px",
   },
 
   links: {
     display: "flex",
-    gap: "12px",
+    gap: "10px",
     flexWrap: "wrap",
   },
 
   link: {
-    color: "#cbd5e1",
-    textDecoration: "none",
-    padding: "6px 10px",
-    borderRadius: "6px",
-  },
-
-  active: {
     color: "white",
-    background: "#2563eb",
-    textDecoration: "none",
     padding: "6px 10px",
     borderRadius: "6px",
+    textDecoration: "none",
+    fontSize: "13px",
   },
 };

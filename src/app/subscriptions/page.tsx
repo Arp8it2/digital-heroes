@@ -3,121 +3,60 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
-type Subscription = {
-  id: string;
-  user_id: string;
-  status: string;
-  amount: number;
-  start_date?: string;
-  end_date?: string;
-};
-
 export default function SubscriptionsPage() {
-  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
-    fetchSubscriptions();
+    getUser();
   }, []);
 
-  const fetchSubscriptions = async () => {
-    setLoading(true);
+  const getUser = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-    const { data, error } = await supabase
-      .from("subscriptions")
-      .select("*")
-      .order("created_at", { ascending: false });
+    setUser(user);
+  };
+
+  const activate = async () => {
+    if (!user) return;
+
+    const start = new Date();
+    const end = new Date();
+    end.setDate(start.getDate() + 30);
+
+    const { error } = await supabase.from("subscriptions").insert([
+      {
+        user_id: user.id,
+        plan: "basic",
+        status: "active",
+        start_date: start,
+        end_date: end,
+      },
+    ]);
 
     if (error) {
       alert(error.message);
-      setLoading(false);
       return;
     }
 
-    setSubscriptions(data || []);
-    setLoading(false);
+    alert("Subscription Activated 🚀");
   };
 
   return (
-    <main style={styles.main}>
-      <h1 style={styles.title}>💳 Subscriptions</h1>
+    <main style={{ padding: "40px", color: "white" }}>
+      <h1>💳 Subscription</h1>
 
-      {loading && <p>Loading subscriptions...</p>}
-
-      {!loading && subscriptions.length === 0 && (
-        <p>No subscriptions found.</p>
-      )}
-
-      <div style={styles.grid}>
-        {subscriptions.map((item) => (
-          <div key={item.id} style={styles.card}>
-            <p>
-              <b>User ID:</b>
-              <br />
-              {item.user_id}
-            </p>
-
-            <p>
-              <b>Status:</b>{" "}
-              <span
-                style={{
-                  color:
-                    item.status === "active"
-                      ? "lightgreen"
-                      : "orange",
-                }}
-              >
-                {item.status}
-              </span>
-            </p>
-
-            <p>
-              <b>Amount:</b> ₹{item.amount}
-            </p>
-
-            {item.start_date && (
-              <p>
-                <b>Start Date:</b>{" "}
-                {new Date(item.start_date).toLocaleDateString()}
-              </p>
-            )}
-
-            {item.end_date && (
-              <p>
-                <b>End Date:</b>{" "}
-                {new Date(item.end_date).toLocaleDateString()}
-              </p>
-            )}
-          </div>
-        ))}
-      </div>
+      <button
+        onClick={activate}
+        style={{
+          padding: "10px 20px",
+          background: "green",
+          color: "white",
+        }}
+      >
+        Activate 30 Days Plan
+      </button>
     </main>
   );
 }
-
-const styles: { [key: string]: React.CSSProperties } = {
-  main: {
-    padding: "40px",
-    minHeight: "100vh",
-    background: "#0f172a",
-    color: "#fff",
-    fontFamily: "sans-serif",
-  },
-
-  title: {
-    fontSize: "28px",
-    marginBottom: "20px",
-  },
-
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-    gap: "15px",
-  },
-
-  card: {
-    background: "#1e293b",
-    padding: "15px",
-    borderRadius: "10px",
-  },
-};

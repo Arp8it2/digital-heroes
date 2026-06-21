@@ -1,115 +1,84 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
-type Draw = {
-  id: string;
-  mode: "random" | "algorithmic";
-  status: string;
-  jackpot_amount: number;
-  created_at?: string;
-};
-
 export default function AdminDrawsPage() {
-  const [draws, setDraws] = useState<Draw[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchDraws();
-  }, []);
-
-  const fetchDraws = async () => {
-    setLoading(true);
-
-    const { data, error } = await supabase
+  const runDraw = async () => {
+    // 1. get published draw
+    const { data: draw } = await supabase
       .from("draws")
       .select("*")
-      .order("created_at", { ascending: false });
+      .eq("status", "published")
+      .single();
 
-    if (error) {
-      alert(error.message);
-      setLoading(false);
+    if (!draw) {
+      alert("No active draw found");
       return;
     }
 
-    setDraws(data || []);
-    setLoading(false);
+    // 2. get entries
+    const { data: entries } = await supabase
+      .from("draw_entries")
+      .select("*")
+      .eq("draw_id", draw.id);
+
+    if (!entries || entries.length === 0) {
+      alert("No entries found");
+      return;
+    }
+
+    let winner;
+
+    // RANDOM MODE
+    if (draw.mode === "random") {
+      winner =
+        entries[Math.floor(Math.random() * entries.length)];
+    }
+
+    // ALGORITHM MODE
+    else {
+      const sorted = [...entries].sort(
+        (a, b) => b.match_count - a.match_count
+      );
+
+      winner = sorted[0];
+    }
+
+    // 3. insert winner
+    await supabase.from("winners").insert([
+      {
+        draw_id: draw.id,
+        user_id: winner.user_id,
+        prize_amount: draw.jackpot_amount,
+        status: "pending",
+      },
+    ]);
+
+    // 4. update draw
+    await supabase
+      .from("draws")
+      .update({ status: "completed" })
+      .eq("id", draw.id);
+
+    alert("🎉 Winner Selected!");
   };
 
   return (
-    <main style={styles.main}>
-      <h1 style={styles.title}>🎯 Admin Draws</h1>
+    <main style={{ padding: "40px" }}>
+      <h1>Admin Draw System</h1>
 
-      {loading && <p>Loading draws...</p>}
-
-      {!loading && draws.length === 0 && (
-        <p>No draws found.</p>
-      )}
-
-      <div style={styles.grid}>
-        {draws.map((draw) => (
-          <div key={draw.id} style={styles.card}>
-            <h2>Draw ID</h2>
-            <p style={styles.small}>{draw.id}</p>
-
-            <p>
-              <b>Mode:</b> {draw.mode}
-            </p>
-
-            <p>
-              <b>Status:</b>{" "}
-              <span
-                style={{
-                  color:
-                    draw.status === "published"
-                      ? "lightgreen"
-                      : "orange",
-                }}
-              >
-                {draw.status}
-              </span>
-            </p>
-
-            <p>
-              <b>Jackpot:</b> ₹{draw.jackpot_amount}
-            </p>
-          </div>
-        ))}
-      </div>
+      <button
+        onClick={runDraw}
+        style={{
+          padding: "10px 20px",
+          background: "green",
+          color: "white",
+          border: "none",
+          borderRadius: "6px",
+        }}
+      >
+        Run Draw
+      </button>
     </main>
   );
 }
-
-const styles: { [key: string]: React.CSSProperties } = {
-  main: {
-    padding: "40px",
-    minHeight: "100vh",
-    background: "#0f172a",
-    color: "#fff",
-    fontFamily: "sans-serif",
-  },
-
-  title: {
-    fontSize: "28px",
-    marginBottom: "20px",
-  },
-
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-    gap: "15px",
-  },
-
-  card: {
-    background: "#1e293b",
-    padding: "15px",
-    borderRadius: "10px",
-  },
-
-  small: {
-    fontSize: "12px",
-    opacity: 0.7,
-    wordBreak: "break-word",
-  },
-};

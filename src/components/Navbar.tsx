@@ -1,10 +1,43 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 
 export default function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    getUser();
+
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      () => {
+        getUser();
+      }
+    );
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
+  }, []);
+
+  const getUser = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    setUser(user);
+  };
+
+  const logout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    router.push("/login");
+  };
 
   const links = [
     { href: "/", label: "Home" },
@@ -16,8 +49,6 @@ export default function Navbar() {
     { href: "/subscriptions", label: "Subscriptions" },
     { href: "/contributions", label: "Contributions" },
     { href: "/profile", label: "Profile" },
-    { href: "/login", label: "Login" },
-    { href: "/signup", label: "Signup" },
     { href: "/contact", label: "Contact" },
     { href: "/help", label: "Help" },
     { href: "/privacy", label: "Privacy" },
@@ -27,7 +58,7 @@ export default function Navbar() {
 
   return (
     <nav style={styles.nav}>
-      <div style={styles.logo}>🏌️ Golf Charity</div>
+      <div style={styles.logo}>🏌️ Digital Heroes</div>
 
       <div style={styles.links}>
         {links.map((link) => (
@@ -43,18 +74,31 @@ export default function Navbar() {
             {link.label}
           </Link>
         ))}
+
+        {/* AUTH SECTION */}
+        <div style={{ marginLeft: "10px" }}>
+          {user ? (
+            <button onClick={logout} style={styles.logout}>
+              Logout
+            </button>
+          ) : (
+            <Link href="/login" style={styles.loginBtn}>
+              Login
+            </Link>
+          )}
+        </div>
       </div>
     </nav>
   );
 }
 
-const styles: { [key: string]: React.CSSProperties } = {
+const styles: any = {
   nav: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
     padding: "15px 20px",
-    background: "#1e293b",
+    background: "#0f172a",
     color: "white",
     flexWrap: "wrap",
   },
@@ -68,6 +112,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: "flex",
     gap: "10px",
     flexWrap: "wrap",
+    alignItems: "center",
   },
 
   link: {
@@ -76,5 +121,22 @@ const styles: { [key: string]: React.CSSProperties } = {
     borderRadius: "6px",
     textDecoration: "none",
     fontSize: "13px",
+  },
+
+  logout: {
+    background: "red",
+    color: "white",
+    border: "none",
+    padding: "6px 10px",
+    borderRadius: "6px",
+    cursor: "pointer",
+  },
+
+  loginBtn: {
+    background: "green",
+    color: "white",
+    padding: "6px 10px",
+    borderRadius: "6px",
+    textDecoration: "none",
   },
 };

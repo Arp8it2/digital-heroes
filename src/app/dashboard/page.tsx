@@ -1,37 +1,132 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
+
 export default function Dashboard() {
+  const router = useRouter();
+
+  const [user, setUser] = useState<any>(null);
+  const [sub, setSub] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    init();
+  }, []);
+
+  const init = async () => {
+    const { data: userData } = await supabase.auth.getUser();
+    const user = userData.user;
+
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+
+    setUser(user);
+
+    const { data } = await supabase
+      .from("subscriptions")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .single();
+
+    setSub(data);
+    setLoading(false);
+  };
+
+  // ⚡ QUICK ACTIONS
+
+  const joinDraw = async () => {
+    if (!user) return;
+
+    const { error } = await supabase.from("contributions").insert([
+      {
+        user_id: user.id,
+        amount: 0,
+        status: "joined",
+      },
+    ]);
+
+    if (error) {
+      alert(error.message);
+    } else {
+      alert("🎯 Joined Draw Successfully");
+    }
+  };
+
+  const viewWinners = () => {
+    router.push("/winners");
+  };
+
+  const upgradePlan = () => {
+    router.push("/subscriptions");
+  };
+
+  if (loading) {
+    return (
+      <main style={{ padding: 40 }}>
+        <h2>Loading Dashboard...</h2>
+      </main>
+    );
+  }
+
   return (
-    <main style={styles.main}>
-      <h1>📊 Dashboard</h1>
-
-      <div style={styles.card}>
-        <h3>Scores</h3>
-        <p>View your performance</p>
+    <main style={{ padding: 40, color: "white" }}>
+      
+      {/* USER CARD */}
+      <div style={card}>
+        <h2>👤 User Info</h2>
+        <p>Email: {user?.email}</p>
+        <p>ID: {user?.id}</p>
       </div>
 
-      <div style={styles.card}>
-        <h3>Subscription</h3>
-        <p>Active / Inactive</p>
+      {/* SUBSCRIPTION */}
+      <div style={card}>
+        <h2>💳 Subscription</h2>
+        <p>Plan: {sub?.plan}</p>
+        <p>Status: {sub?.status}</p>
+        <p>Ends: {sub?.end_date}</p>
       </div>
 
-      <div style={styles.card}>
-        <h3>Draws</h3>
-        <p>Monthly winner system</p>
+      {/* QUICK ACTIONS */}
+      <div style={card}>
+        <h2>⚡ Quick Actions</h2>
+
+        <button style={btn} onClick={joinDraw}>
+          Join Draw
+        </button>
+
+        <button style={btn} onClick={viewWinners}>
+          View Winners
+        </button>
+
+        <button style={btn} onClick={upgradePlan}>
+          Upgrade Plan
+        </button>
       </div>
+
     </main>
   );
 }
 
-const styles = {
-  main: {
-    padding: "40px",
-    minHeight: "100vh",
-    background: "#0f172a",
-    color: "white",
-  },
-  card: {
-    marginTop: "15px",
-    padding: "15px",
-    background: "#1e293b",
-    borderRadius: "8px",
-  },
+// 🎨 UI STYLES
+
+const card = {
+  background: "#111",
+  padding: "20px",
+  marginBottom: "15px",
+  borderRadius: "10px",
+};
+
+const btn = {
+  marginRight: "10px",
+  padding: "10px 15px",
+  background: "green",
+  color: "white",
+  border: "none",
+  borderRadius: "6px",
+  cursor: "pointer",
 };

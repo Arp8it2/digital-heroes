@@ -2,23 +2,34 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
+  const router = useRouter();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const login = async () => {
-    const res = await supabase.auth.signInWithPassword({
+    setLoading(true);
+
+    const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    if (res.error) {
-      alert(res.error.message);
+    setLoading(false);
+
+    if (error) {
+      alert(error.message);
       return;
     }
 
-    alert("Login Success");
+    alert("Login Success 🚀");
+
+    // redirect after login
+    router.push("/dashboard");
   };
 
   return (
@@ -28,6 +39,7 @@ export default function LoginPage() {
       <input
         style={styles.input}
         placeholder="Email"
+        value={email}
         onChange={(e) => setEmail(e.target.value)}
       />
 
@@ -35,17 +47,22 @@ export default function LoginPage() {
         style={styles.input}
         type="password"
         placeholder="Password"
+        value={password}
         onChange={(e) => setPassword(e.target.value)}
       />
 
-      <button style={styles.btn} onClick={login}>
-        Login
+      <button
+        style={styles.btn}
+        onClick={login}
+        disabled={loading}
+      >
+        {loading ? "Logging in..." : "Login"}
       </button>
     </main>
   );
 }
 
-const styles = {
+const styles: any = {
   main: {
     padding: "40px",
     minHeight: "100vh",
@@ -63,7 +80,7 @@ const styles = {
   btn: {
     marginTop: "15px",
     padding: "10px 15px",
-    background: "green",
+    background: "#16a34a",
     color: "white",
     border: "none",
     borderRadius: "6px",

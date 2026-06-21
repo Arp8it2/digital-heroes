@@ -1,34 +1,35 @@
-export default function Admin() {
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { isAdmin } from "@/lib/auth";
+
+export default function AdminPage() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    checkAdmin();
+  }, []);
+
+  const checkAdmin = async () => {
+    const admin = await isAdmin();
+
+    if (!admin) {
+      router.push("/dashboard");
+    } else {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return <p style={{ padding: "40px" }}>Checking admin...</p>;
+  }
+
   return (
-    <main style={styles.main}>
-      <h1>⚙ Admin Panel</h1>
-
-      <div style={styles.card}>
-        <p>Manage Users</p>
-      </div>
-
-      <div style={styles.card}>
-        <p>Manage Draws</p>
-      </div>
-
-      <div style={styles.card}>
-        <p>Manage Winners</p>
-      </div>
+    <main style={{ padding: "40px" }}>
+      <h1>🔥 Admin Panel</h1>
+      <p>Only admins can see this page</p>
     </main>
   );
 }
-
-const styles = {
-  main: {
-    padding: "40px",
-    minHeight: "100vh",
-    background: "#0f172a",
-    color: "white",
-  },
-  card: {
-    marginTop: "15px",
-    padding: "15px",
-    background: "#1e293b",
-    borderRadius: "8px",
-  },
-};

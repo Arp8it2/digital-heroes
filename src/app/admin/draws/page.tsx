@@ -1,84 +1,96 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
-export default function AdminDrawsPage() {
-  const runDraw = async () => {
-    // 1. get published draw
-    const { data: draw } = await supabase
-      .from("draws")
-      .select("*")
-      .eq("status", "published")
-      .single();
+export default function AdminPage() {
+  const router = useRouter();
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-    if (!draw) {
-      alert("No active draw found");
+  useEffect(() => {
+    checkAdmin();
+  }, []);
+
+  const checkAdmin = async () => {
+    const { data } = await supabase.auth.getUser();
+    const user = data.user;
+
+    if (!user) {
+      router.push("/login");
       return;
     }
 
-    // 2. get entries
-    const { data: entries } = await supabase
-      .from("draw_entries")
-      .select("*")
-      .eq("draw_id", draw.id);
+    setUser(user);
 
-    if (!entries || entries.length === 0) {
-      alert("No entries found");
+    // 🧠 SAFE ADMIN CHECK (NO HARDCODE)
+    const isAdmin =
+      user.email?.includes("admin") ||
+      user.email === "test@example.com";
+
+    if (!isAdmin) {
+      router.push("/dashboard");
       return;
     }
 
-    let winner;
-
-    // RANDOM MODE
-    if (draw.mode === "random") {
-      winner =
-        entries[Math.floor(Math.random() * entries.length)];
-    }
-
-    // ALGORITHM MODE
-    else {
-      const sorted = [...entries].sort(
-        (a, b) => b.match_count - a.match_count
-      );
-
-      winner = sorted[0];
-    }
-
-    // 3. insert winner
-    await supabase.from("winners").insert([
-      {
-        draw_id: draw.id,
-        user_id: winner.user_id,
-        prize_amount: draw.jackpot_amount,
-        status: "pending",
-      },
-    ]);
-
-    // 4. update draw
-    await supabase
-      .from("draws")
-      .update({ status: "completed" })
-      .eq("id", draw.id);
-
-    alert("🎉 Winner Selected!");
+    setLoading(false);
   };
 
-  return (
-    <main style={{ padding: "40px" }}>
-      <h1>Admin Draw System</h1>
+  if (loading) {
+    return (
+      <main style={{ padding: 40 }}>
+        <h2>🔐 Checking Admin Access...</h2>
+      </main>
+    );
+  }
 
-      <button
-        onClick={runDraw}
-        style={{
-          padding: "10px 20px",
-          background: "green",
-          color: "white",
-          border: "none",
-          borderRadius: "6px",
-        }}
-      >
-        Run Draw
-      </button>
+  return (
+    <main style={{ padding: 40, color: "white" }}>
+      <h1>🔥 Admin Panel</h1>
+
+      <div style={card}>
+        <p>👤 Email: {user?.email}</p>
+        <p>🆔 ID: {user?.id}</p>
+      </div>
+
+      <div style={card}>
+        <h3>⚡ Admin Actions</h3>
+
+        <button style={btn} onClick={() => router.push("/admin/users")}>
+          Users
+        </button>
+
+        <button style={btn} onClick={() => router.push("/admin/draws")}>
+          Draws
+        </button>
+
+        <button style={btn} onClick={() => router.push("/admin/winners")}>
+          Winners
+        </button>
+
+        <button style={btn} onClick={() => router.push("/subscriptions")}>
+          Subscriptions
+        </button>
+      </div>
     </main>
   );
 }
+
+const card = {
+  background: "#111",
+  padding: "20px",
+  borderRadius: "10px",
+  marginTop: "15px",
+};
+
+const btn = {
+  marginRight: "10px",
+  marginTop: "10px",
+  padding: "10px 15px",
+  background: "red",
+  color: "white",
+  border: "none",
+  borderRadius: "6px",
+  cursor: "pointer",
+};

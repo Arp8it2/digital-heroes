@@ -9,36 +9,62 @@ export default function LoginPage() {
 
   const [email, setEmail] =
     useState("");
+
   const [password, setPassword] =
     useState("");
+
   const [loading, setLoading] =
     useState(false);
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      alert(
-        "Please fill all fields"
+    try {
+      if (!email || !password) {
+        alert(
+          "Please fill all fields"
+        );
+        return;
+      }
+
+      setLoading(true);
+
+      const { data, error } =
+        await supabase.auth.signInWithPassword(
+          {
+            email,
+            password,
+          }
+        );
+
+      console.log(
+        "LOGIN DATA:",
+        data
       );
-      return;
-    }
 
-    setLoading(true);
-
-    const { error } =
-      await supabase.auth.signInWithPassword(
-        {
-          email,
-          password,
-        }
+      console.log(
+        "LOGIN ERROR:",
+        error
       );
 
-    if (error) {
-      alert(error.message);
+      if (error) {
+        alert(error.message);
+        setLoading(false);
+        return;
+      }
+
       setLoading(false);
-      return;
-    }
 
-    router.push("/dashboard");
+      window.location.href =
+        "/dashboard";
+    } catch (err: any) {
+      console.error(err);
+
+      alert(
+        err.message ||
+          "Login failed"
+      );
+
+      setLoading(false);
+    }
   };
 
   return (
@@ -47,7 +73,8 @@ export default function LoginPage() {
         minHeight: "100vh",
         background: "#020b24",
         display: "flex",
-        justifyContent: "center",
+        justifyContent:
+          "center",
         alignItems: "center",
         padding: "30px",
       }}
@@ -59,14 +86,17 @@ export default function LoginPage() {
         }}
       >
         {/* HERO */}
+
         <div
           style={{
             background:
               "linear-gradient(90deg,#00d26a,#b7f34d)",
-            borderRadius: "30px",
+            borderRadius:
+              "30px",
             padding: "35px",
             color: "#000",
-            marginBottom: "20px",
+            marginBottom:
+              "20px",
           }}
         >
           <p
@@ -95,25 +125,30 @@ export default function LoginPage() {
               fontSize: "18px",
             }}
           >
-            Access your Golf Charity
-            Platform account.
+            Access your Golf
+            Charity Platform
+            account.
           </p>
         </div>
 
         {/* FORM */}
+
         <div
           style={{
-            background: "#1a2740",
+            background:
+              "#1a2740",
             border:
               "1px solid #23375d",
-            borderRadius: "24px",
+            borderRadius:
+              "24px",
             padding: "30px",
           }}
         >
           <h2
             style={{
               color: "white",
-              marginBottom: "20px",
+              marginBottom:
+                "20px",
             }}
           >
             🔐 Sign In
@@ -134,7 +169,9 @@ export default function LoginPage() {
                   e.target.value
                 )
               }
-              style={inputStyle}
+              style={
+                inputStyle
+              }
             />
 
             <input
@@ -146,7 +183,9 @@ export default function LoginPage() {
                   e.target.value
                 )
               }
-              style={inputStyle}
+              style={
+                inputStyle
+              }
             />
 
             <button
@@ -158,16 +197,19 @@ export default function LoginPage() {
               }
               style={{
                 border: "none",
-                padding: "14px",
+                padding:
+                  "14px",
                 borderRadius:
                   "14px",
                 background:
                   "linear-gradient(90deg,#00d26a,#b7f34d)",
-                color: "#000",
+                color:
+                  "#000",
                 fontWeight: 800,
                 cursor:
                   "pointer",
-                fontSize: "16px",
+                fontSize:
+                  "16px",
               }}
             >
               {loading
@@ -184,7 +226,8 @@ export default function LoginPage() {
               style={{
                 border:
                   "1px solid #334155",
-                padding: "14px",
+                padding:
+                  "14px",
                 borderRadius:
                   "14px",
                 background:
@@ -208,7 +251,8 @@ export default function LoginPage() {
 const inputStyle = {
   padding: "14px",
   borderRadius: "12px",
-  border: "1px solid #334155",
+  border:
+    "1px solid #334155",
   background: "#0f172a",
   color: "white",
   fontSize: "15px",

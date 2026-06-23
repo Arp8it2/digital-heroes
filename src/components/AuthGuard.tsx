@@ -10,19 +10,25 @@ export default function AuthGuard({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+
   const [loading, setLoading] =
     useState(true);
 
   useEffect(() => {
-    checkUser();
+    checkSession();
   }, []);
 
-  const checkUser = async () => {
+  const checkSession = async () => {
     const {
-      data: { user },
-    } = await supabase.auth.getUser();
+      data: { session },
+    } = await supabase.auth.getSession();
 
-    if (!user) {
+    console.log(
+      "AUTH SESSION:",
+      session
+    );
+
+    if (!session) {
       router.replace("/login");
       return;
     }
@@ -38,6 +44,7 @@ export default function AuthGuard({
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
+          fontSize: "20px",
         }}
       >
         Checking Login...

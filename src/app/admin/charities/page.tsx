@@ -3,19 +3,13 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
-type Charity = {
-  id: string;
-  name: string;
-  description: string;
-  image_url?: string;
-  website_url?: string;
-  is_active?: boolean;
-  created_at?: string;
-};
-
 export default function AdminCharitiesPage() {
-  const [charities, setCharities] = useState<Charity[]>([]);
+  const [charities, setCharities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [website, setWebsite] = useState("");
 
   useEffect(() => {
     fetchCharities();
@@ -24,122 +18,288 @@ export default function AdminCharitiesPage() {
   const fetchCharities = async () => {
     setLoading(true);
 
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("charities")
       .select("*")
       .order("created_at", { ascending: false });
-
-    if (error) {
-      alert(error.message);
-      setLoading(false);
-      return;
-    }
 
     setCharities(data || []);
     setLoading(false);
   };
 
+  const createCharity = async () => {
+    if (!name) {
+      alert("Enter charity name");
+      return;
+    }
+
+    const { error } = await supabase
+      .from("charities")
+      .insert([
+        {
+          name,
+          description,
+          website_url: website,
+          is_active: true,
+        },
+      ]);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    setName("");
+    setDescription("");
+    setWebsite("");
+
+    fetchCharities();
+  };
+
+  const deleteCharity = async (id: string) => {
+    if (!confirm("Delete this charity?")) return;
+
+    const { error } = await supabase
+      .from("charities")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    fetchCharities();
+  };
+
   return (
-    <main style={styles.main}>
-      <h1 style={styles.title}>🏦 Admin Charities</h1>
+    <main
+      style={{
+        minHeight: "100vh",
+        background: "#020b24",
+        color: "white",
+        padding: "30px",
+      }}
+    >
+      {/* HERO */}
+      <div
+        style={{
+          background:
+            "linear-gradient(90deg,#00d26a,#b7f34d)",
+          borderRadius: "30px",
+          padding: "35px",
+          color: "#000",
+          marginBottom: "25px",
+        }}
+      >
+        <p
+          style={{
+            fontWeight: 800,
+            textTransform: "uppercase",
+          }}
+        >
+          Admin Control Center
+        </p>
 
-      {loading && <p>Loading charities...</p>}
+        <h1
+          style={{
+            fontSize: "60px",
+            fontWeight: 900,
+            marginTop: "10px",
+          }}
+        >
+          Manage Charities
+        </h1>
 
-      {!loading && charities.length === 0 && (
-        <p>No charities found.</p>
-      )}
+        <p style={{ marginTop: "10px" }}>
+          Create and manage charity partners
+        </p>
+      </div>
 
-      <div style={styles.grid}>
-        {charities.map((item) => (
-          <div key={item.id} style={styles.card}>
-            <h2 style={styles.name}>{item.name}</h2>
+      {/* STATS */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns:
+            "repeat(auto-fit,minmax(220px,1fr))",
+          gap: "20px",
+          marginBottom: "25px",
+        }}
+      >
+        <div
+          style={{
+            background: "#1a2740",
+            border: "1px solid #23375d",
+            borderRadius: "24px",
+            padding: "25px",
+          }}
+        >
+          <h2
+            style={{
+              fontSize: "38px",
+              fontWeight: 900,
+            }}
+          >
+            {charities.length}
+          </h2>
 
-            <p style={styles.desc}>{item.description}</p>
+          <p style={{ color: "#94a3b8" }}>
+            Total Charities
+          </p>
+        </div>
+      </div>
 
-            {item.image_url && (
-              <img
-                src={item.image_url}
-                alt={item.name}
-                style={styles.image}
-              />
-            )}
+      {/* CREATE */}
+      <div
+        style={{
+          background: "#1a2740",
+          borderRadius: "24px",
+          padding: "25px",
+          marginBottom: "25px",
+          border: "1px solid #23375d",
+        }}
+      >
+        <h2>➕ Create New Charity</h2>
 
-            <p style={styles.meta}>
-              <b>Website:</b>{" "}
-              <a
-                href={item.website_url}
-                target="_blank"
-                style={styles.link}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns:
+              "repeat(auto-fit,minmax(250px,1fr))",
+            gap: "15px",
+            marginTop: "20px",
+          }}
+        >
+          <input
+            placeholder="Charity Name"
+            value={name}
+            onChange={(e) =>
+              setName(e.target.value)
+            }
+            style={inputStyle}
+          />
+
+          <input
+            placeholder="Website URL"
+            value={website}
+            onChange={(e) =>
+              setWebsite(e.target.value)
+            }
+            style={inputStyle}
+          />
+
+          <input
+            placeholder="Description"
+            value={description}
+            onChange={(e) =>
+              setDescription(e.target.value)
+            }
+            style={inputStyle}
+          />
+
+          <button
+            onClick={createCharity}
+            style={{
+              border: "none",
+              borderRadius: "14px",
+              fontWeight: 800,
+              cursor: "pointer",
+              background:
+                "linear-gradient(90deg,#00d26a,#b7f34d)",
+              color: "#000",
+            }}
+          >
+            Create Charity
+          </button>
+        </div>
+      </div>
+
+      {/* LIST */}
+      <div
+        style={{
+          background: "#1a2740",
+          borderRadius: "24px",
+          padding: "25px",
+          border: "1px solid #23375d",
+        }}
+      >
+        <h2 style={{ marginBottom: "20px" }}>
+          ❤️ Charity List
+        </h2>
+
+        {loading && <p>Loading charities...</p>}
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns:
+              "repeat(auto-fit,minmax(320px,1fr))",
+            gap: "20px",
+          }}
+        >
+          {charities.map((charity) => (
+            <div
+              key={charity.id}
+              style={{
+                background: "#22314f",
+                border: "1px solid #31496f",
+                borderRadius: "20px",
+                padding: "20px",
+              }}
+            >
+              <h3
+                style={{
+                  fontSize: "26px",
+                  marginBottom: "10px",
+                }}
               >
-                {item.website_url || "N/A"}
-              </a>
-            </p>
+                {charity.name}
+              </h3>
 
-            <p style={styles.status}>
-              Status:{" "}
-              {item.is_active ? "🟢 Active" : "🔴 Inactive"}
-            </p>
-          </div>
-        ))}
+              <p
+                style={{
+                  color: "#cbd5e1",
+                  marginBottom: "10px",
+                }}
+              >
+                {charity.description}
+              </p>
+
+              <p>
+                Status:{" "}
+                {charity.is_active
+                  ? "🟢 Active"
+                  : "🔴 Inactive"}
+              </p>
+
+              <button
+                onClick={() =>
+                  deleteCharity(charity.id)
+                }
+                style={{
+                  marginTop: "15px",
+                  background: "#ef4444",
+                  color: "white",
+                  border: "none",
+                  padding: "10px 16px",
+                  borderRadius: "10px",
+                  cursor: "pointer",
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
     </main>
   );
 }
 
-const styles: { [key: string]: React.CSSProperties } = {
-  main: {
-    padding: "40px",
-    minHeight: "100vh",
-    background: "#0f172a",
-    color: "#fff",
-    fontFamily: "sans-serif",
-  },
-
-  title: {
-    fontSize: "28px",
-    marginBottom: "20px",
-  },
-
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-    gap: "15px",
-  },
-
-  card: {
-    background: "#1e293b",
-    padding: "15px",
-    borderRadius: "10px",
-  },
-
-  name: {
-    marginBottom: "8px",
-  },
-
-  desc: {
-    fontSize: "14px",
-    opacity: 0.9,
-  },
-
-  image: {
-    width: "100%",
-    height: "180px",
-    objectFit: "cover",
-    borderRadius: "8px",
-    marginTop: "10px",
-  },
-
-  meta: {
-    marginTop: "10px",
-    fontSize: "14px",
-  },
-
-  link: {
-    color: "#60a5fa",
-  },
-
-  status: {
-    marginTop: "10px",
-    fontWeight: 600,
-  },
+const inputStyle = {
+  padding: "14px",
+  borderRadius: "12px",
+  border: "1px solid #334155",
+  background: "#0f172a",
+  color: "white",
 };

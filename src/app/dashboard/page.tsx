@@ -1,6 +1,5 @@
-import AuthGuard from "@/components/AuthGuard";
-
 "use client";
+import AuthGuard from "@/components/AuthGuard";
 
 export default function Dashboard() {
   const scores = [31, 33, 28, 31, 24];

@@ -1,3 +1,5 @@
+import AuthGuard from "@/components/AuthGuard";
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -64,6 +66,7 @@ export default function ContributionsPage() {
       : 0;
 
   return (
+    <AuthGuard>
     <main
       style={{
         minHeight: "100vh",
@@ -380,5 +383,6 @@ export default function ContributionsPage() {
         </div>
       </div>
     </main>
+    </AuthGuard>
   );
 }

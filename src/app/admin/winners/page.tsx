@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import AuthGuard from "@/components/AuthGuard";
 
 type Winner = {
   id: string;
@@ -97,6 +98,7 @@ export default function AdminWinnersPage() {
     ).length;
 
   return (
+    <AuthGuard>
     <main
       style={{
         minHeight: "100vh",
@@ -436,5 +438,6 @@ export default function AdminWinnersPage() {
         </div>
       </div>
     </main>
+    </AuthGuard>
   );
 }

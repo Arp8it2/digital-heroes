@@ -1,3 +1,5 @@
+import AuthGuard from "@/components/AuthGuard";
+
 "use client";
 
 export default function Dashboard() {
@@ -5,11 +7,12 @@ export default function Dashboard() {
   const drawNumbers = [24, 31, 28, 33, 31];
 
   return (
-    <main
-    style={{
-        height: "100vh",
-        overflow: "hidden",
-        background: "#020b24",
+    <AuthGuard>
+      <main
+      style={{
+          height: "100vh",
+          overflow: "hidden",
+          background: "#020b24",
       }}
 
      className="min-h-screen bg-[#0b1220] text-white w-full">
@@ -276,6 +279,7 @@ export default function Dashboard() {
         </div>
       </div>
     </main>
+    </AuthGuard>
   );
 }
 

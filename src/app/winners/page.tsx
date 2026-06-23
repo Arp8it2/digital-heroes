@@ -1,3 +1,5 @@
+import AuthGuard from "@/components/AuthGuard";
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -44,11 +46,12 @@ export default function WinnersPage() {
   );
 
   return (
-    <main
-      style={{
-    height: "100vh",
-    overflow: "hidden",
-    background: "#020b24",
+    <AuthGuard>
+      <main
+        style={{
+      height: "100vh",
+      overflow: "hidden",
+      background: "#020b24",
     color: "white",
     padding: "30px",
   }}
@@ -322,5 +325,6 @@ export default function WinnersPage() {
         </div>
       </div>
     </main>
+    </AuthGuard>
   );
 }

@@ -1,3 +1,5 @@
+import AuthGuard from "@/components/AuthGuard";
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -19,12 +21,13 @@ export default function ProfilePage() {
   };
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background: "#020b24",
-        color: "white",
-        padding: "30px",
+    <AuthGuard>
+      <main
+        style={{
+          minHeight: "100vh",
+          background: "#020b24",
+          color: "white",
+          padding: "30px",
       }}
     >
       {/* HERO */}
@@ -248,6 +251,7 @@ export default function ProfilePage() {
         </div>
       </div>
     </main>
+    </AuthGuard>
   );
 }
 

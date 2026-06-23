@@ -1,3 +1,5 @@
+import AuthGuard from "@/components/AuthGuard";
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -24,6 +26,7 @@ export default function AdminPage() {
 
   if (loading) {
     return (
+      <AuthGuard>
       <main
         style={{
           minHeight: "100vh",
@@ -38,6 +41,7 @@ export default function AdminPage() {
       >
         Checking Admin Access...
       </main>
+      </AuthGuard>
     );
   }
 
@@ -51,6 +55,7 @@ export default function AdminPage() {
   };
 
   return (
+    <AuthGuard>
     <main
       style={{
         minHeight: "100vh",
@@ -328,6 +333,7 @@ export default function AdminPage() {
         </div>
       </div>
     </main>
+    </AuthGuard>
   );
 }
 

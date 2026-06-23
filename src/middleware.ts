@@ -1,39 +1,31 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+const publicRoutes = [
+  "/login",
+  "/signup",
+];
+
 export function middleware(
   request: NextRequest
 ) {
+  const token =
+    request.cookies.get(
+      "sb-access-token"
+    );
+
   const pathname =
     request.nextUrl.pathname;
 
-  // Protected Routes
-
-  const protectedRoutes = [
-    "/dashboard",
-    "/profile",
-    "/subscriptions",
-    "/admin",
-  ];
-
-  const isProtected =
-    protectedRoutes.some((route) =>
-      pathname.startsWith(route)
-    );
-
-  if (!isProtected) {
+  if (
+    publicRoutes.includes(
+      pathname
+    )
+  ) {
     return NextResponse.next();
   }
 
-  const hasSession =
-    request.cookies.get(
-      "sb-access-token"
-    ) ||
-    request.cookies.get(
-      "supabase-auth-token"
-    );
-
-  if (!hasSession) {
+  if (!token) {
     return NextResponse.redirect(
       new URL(
         "/login",
@@ -48,6 +40,11 @@ export function middleware(
 export const config = {
   matcher: [
     "/dashboard/:path*",
+    "/draws/:path*",
+    "/winners/:path*",
+    "/scores/:path*",
+    "/charities/:path*",
+    "/contributions/:path*",
     "/profile/:path*",
     "/subscriptions/:path*",
     "/admin/:path*",
